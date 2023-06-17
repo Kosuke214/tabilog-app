@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use APP\Http\Controllers\DirectionsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,3 +29,7 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Auth::routes();
+
+Route::get('/directions', [App\Http\Controllers\DirectionsController::class, 'showDirections'])->name('directions');
+
+
