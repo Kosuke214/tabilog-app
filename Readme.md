@@ -1,6 +1,6 @@
 # Tabilog
 
-https://github.com/Kosuke214/tabilog-app/assets/116525694/671b3d2e-6b47-4128-8ef8-d5d53ed46850
+https://github.com/Kosuke214/tabilog-app/assets/116525694/f4f5caf9-4022-4005-b9e1-472698fc1171
 
 ## サイト概要
 ### サイトテーマ
