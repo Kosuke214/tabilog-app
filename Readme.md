@@ -22,8 +22,9 @@
 
 
 ## 開発環境
-- OS：Linux(Amazon Linux2)
-- 言語：HTML,CSS,PHP,JavaScript,SQL
-- フレームワーク：Laravel
-- 
+- 開発環境:Dockerコンテナ(LEMP環境)
+- ベースイメージ:nginx
+- ホストOS：macOS
+- 言語：HTML,CSS,PHP(8.2.7),JavaScript,MySQL(8.0)
+- フレームワーク：Laravel(9.52.9)
 - IDE：Visual Studio Code
