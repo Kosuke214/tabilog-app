@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DirectionsController;
+use App\Http\Controllers\TravelScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,14 +19,20 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
-Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Auth::routes();
+
+Route::get('/travel-schedule', [TravelScheduleController::class, 'travelSchedule'])->name('travel-schedule');
+
+Route::get('/travel-schedule/edit', function () {
+    return redirect()->route('directions');
+})->name('travel-schedule-edit');
+
+Route::get('/directions', [DirectionsController::class, 'showDirectionsForm'])->name('directions');
+Route::post('/directions', [DirectionsController::class, 'getDirections'])->name('get-directions');
+
+Route::post('/store-schedule', [TravelScheduleController::class, 'storeSchedule'])->name('store-schedule');
+
+

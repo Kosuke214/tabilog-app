@@ -14,6 +14,7 @@
     @yield('third_party_stylesheets')
 
     @stack('page_css')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -32,7 +33,7 @@
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
                     <img src="https://assets.infyom.com/logo/blue_logo_150x150.png"
                          class="user-image img-circle elevation-2" alt="User Image">
-                    <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
+                    <span class="d-none d-md-inline">{{ Auth::user() ? Auth::user()->name : 'Guest' }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                     <!-- User image -->
@@ -41,8 +42,8 @@
                              class="img-circle elevation-2"
                              alt="User Image">
                         <p>
-                            {{ Auth::user()->name }}
-                            <small>Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
+                        {{ Auth::user() ? Auth::user()->name : 'Guest' }}
+                            <small>Member since {{ Auth::user() ? Auth::user()->created_at->format('M. Y') : '' }}</small>
                         </p>
                     </li>
                     <!-- Menu Footer-->

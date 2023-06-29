@@ -14,7 +14,8 @@
         "laravel/framework": "^9.0.0",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
-        "laravel/ui": "^3.0"
+        "laravel/ui": "^3.0",
+        "nesbot/carbon": "^2.67"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
@@ -67,4 +68,5 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true
+
 }
