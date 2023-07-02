@@ -9,6 +9,7 @@ use Carbon\Carbon;
 
 class TravelScheduleController extends Controller
 {
+    
     public function travelSchedule(Request $request)
     {
         $origin = $request->input('origin');
@@ -17,8 +18,12 @@ class TravelScheduleController extends Controller
         $travelDuration = $request->input('travel-duration');
         $stayDuration = $request->input('stay-duration');
         $departureTime = $request->input('departure-time')
-            ? \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $request->input('departure-time'))
-            : null;
+          ? \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $request->input('departure-time'))->format('Y-m-d H:i')
+          : null;
+
+        
+
+
         $waypoint = $request->input('waypoint');
 
         $routes = []; // $routes変数を初期化
@@ -35,7 +40,24 @@ class TravelScheduleController extends Controller
                 $waypointRoutes = $this->getDirectionRoutes($previousWaypoint, $waypoint, $destination, $mode, $stayDuration, $departureTime);
 
                 foreach ($waypointRoutes as $route) {
-                    $routes[] = $route;
+                    if ($route['waypoint'] !== null) {
+                        $routes[] = [
+                            'waypoint' => $route['waypoint'],
+                            'stay_hours' => $route['stay_hours'],
+                            'stay_minutes' => $route['stay_minutes'],
+                            'legs' => $route['legs'],
+                            'duration' => $route['duration'],
+                        ];
+                    } else {
+                        $routes[] = [
+                            'waypoint' => null,
+                            'stay_hours' => 0,
+                            'stay_minutes' => 0,
+                            'legs' => $route['legs'],
+                            'duration' => $route['duration'],
+                        ];
+                    }
+
                     $previousWaypoint = $route['waypoint']; // 経由地を更新
                 }
             }
@@ -70,6 +92,8 @@ class TravelScheduleController extends Controller
         // ルート詳細情報をセッションに保存
         $request->session()->put('routeDetails', $routeDetails);
 
+        // \Log::info('Route Details: ' . json_encode($routeDetails));
+
         return view('travel-schedule', [
             'origin' => $origin,
             'destination' => $destination,
@@ -81,10 +105,10 @@ class TravelScheduleController extends Controller
             'routes' => $routes,
             'routeDetails' => $routeDetails,
         ]);
+
+        dd($origin, $destination, $mode, $travelDuration, $stayDuration, $departureTime, $waypoint, $routes, $routeDetails);
+
     }
-
-
-
 
     public function storeSchedule(Request $request)
     {
@@ -96,46 +120,86 @@ class TravelScheduleController extends Controller
         $travelDuration = (int) $request->input('travel-duration');
         $mode = $request->input('mode');
 
-        $routeDetails = []; // ルート詳細を格納する空の配列
-
         $routes = [];
-        foreach ($routeDetails as $index => $routeDetail) {
-            $routes[] = [
-                'waypoint' => $routeDetail['waypointName'], // 'waypoint' ではなく 'waypointName' を使用する
-                'stayDuration' => $routeDetail['stayDuration'],
-                'legDuration' => $routeDetail['legDuration'],
-                'totalDuration' => $routeDetail['totalDuration'],
-            ];
+
+        // 出発地から経由地までの経路を取得し、配列に追加
+        if (!empty($waypoint)) {
+            $waypoints = explode("|", $waypoint);
+            $previousWaypoint = $origin;
+
+            foreach ($waypoints as $waypoint) {
+                // 経由地から目的地までの経路を取得
+                $waypointRoutes = $this->getDirectionRoutes($previousWaypoint, $waypoint, $destination, $mode, $stayDuration, $departureTime);
+
+                foreach ($waypointRoutes as $route) {
+                    $routes[] = $route;
+                    $previousWaypoint = $route['waypoint']; // 経由地を更新
+                }
+            }
+
+            // 経由地から目的地までの経路を取得
+            $finalRoute = $this->getDirectionRoutes(end($waypoints), $destination, $destination, $mode, $stayDuration, $departureTime);
+            if (!empty($finalRoute)) {
+                $routes[] = $finalRoute[0];
+            }
         }
 
-        $routeDetails = $request->session()->get('routeDetails', []);
+        $routeDetails = [];
+        $totalDuration = 0; // 累計移動時間を初期化
+        $arrivalTime = $departureTime->copy(); // 出発時刻を到着予想時刻の初期値とする
 
-        // ログ出力
-        \Log::info('Route Details before saving to session: ' . json_encode($routeDetails));
-
-        // ルート詳細をセッションに保存
-        $request->session()->flash('routeDetails', $routeDetails);
-
-        // ルート詳細を表示
-        \Log::info('Route Details after saving to session: ' . json_encode($request->session()->get('routeDetails', [])));
-
-
-        // $routeDetails の後にある処理を実行
-        $routes = [];
-        foreach ($routeDetails as $index => $routeDetail) {
-            $routes[] = [
-                'waypoint' => $routeDetail['waypointName'],
-                'stayDuration' => $routeDetail['stayDuration'],
-                'legDuration' => $routeDetail['legDuration'],
-                'totalDuration' => $routeDetail['totalDuration'],
-            ];
+        foreach ($routes as $index => $route) {
+          $stayDurationMinutes = $route['stay_hours'] * 60 + $route['stay_minutes'];
+          $legDuration = isset($route['legs'][0]['duration']['value']) ? $route['legs'][0]['duration']['value'] : 0;
+          $waypointName = $route['waypoint']; // 経由地の名称
+          $waypointLegDuration = isset($route['legs'][0]['duration']['value']) ? $route['legs'][0]['duration']['value'] : 0; // 経由地から目的地までの移動時間
+  
+          if ($index === 0) {
+              $routeDetails[] = [
+                  'waypointName' => null,
+                  'stayDuration' => 0,
+                  'legDuration' => $legDuration,
+                  'totalDuration' => $totalDuration,
+                  'departure-time' => $departureTime,
+                  'origin' => $origin,
+                  'destination' => $route['waypoint'],
+                  'arrival-time' => $arrivalTime,
+              ];
+          }
+  
+          $routeDetails[] = [
+              'waypointName' => $waypointName,
+              'stayDuration' => $stayDurationMinutes,
+              'legDuration' => $legDuration,
+              'totalDuration' => $totalDuration + $stayDurationMinutes + $legDuration,
+              'departure-time' => $departureTime,
+              'origin' => end($waypoints),
+              'destination' => $destination,
+              'arrival-time' => $arrivalTime->addSeconds($waypointLegDuration), // 到着予想時刻を更新
+          ];
+  
+          $totalDuration += $stayDurationMinutes + $legDuration;
         }
+      
 
+        // 目的地を追加
+        // $routeDetails[] = [
+        //   'waypointName' => null,
+        //   'stayDuration' => 0,
+        //   'legDuration' => isset($routes[count($routes) - 1]['legs'][0]['duration']['value']) ? $routes[count($routes) - 1]['legs'][0]['duration']['value'] : 0,
+        //   'totalDuration' => $totalDuration + $stayDurationMinutes + $legDuration,
+        //   'departure-time' => $departureTime,
+        //   'origin' => end($waypoints),
+        //   'destination' => $destination,
+        // ];
+      
 
-        // セッションに保存されたデータを確認する
-        \Log::info('Route Details after saving to session: ' . json_encode($request->session()->get('routeDetails', [])));
+        // ルート詳細情報をセッションに保存
+        $request->session()->put('routeDetails', $routeDetails);
 
-        session([
+        \Log::info('Route Details: ' . json_encode($routeDetails));
+
+        return view('travel-schedule', [
             'origin' => $origin,
             'destination' => $destination,
             'mode' => $mode,
@@ -143,15 +207,15 @@ class TravelScheduleController extends Controller
             'stayDuration' => $stayDuration,
             'departure-time' => $departureTime,
             'waypoint' => $waypoint,
+            'routes' => $routes,
+            'routeDetails' => $routeDetails,
+            'arrivalTime' => $arrivalTime,
         ]);
-
-        return redirect()->route('travel-schedule');
     }
+
 
     private function getDirectionRoutes($origin, $waypoint, $destination, $mode, $stayDuration, $departureTime)
     {
-        
-
         // 経路検索のためのAPIリクエストを作成
         $apiKey = config('app.google_maps_api_key');
         $client = new Client();
@@ -193,12 +257,17 @@ class TravelScheduleController extends Controller
             $totalDuration = $duration + $stayDuration;
 
             $routes[] = [
-                'legs' => $legs,
-                'waypoint' => $waypoint,
-                'duration' => $totalDuration,
-                'stay_hours' => $stayHours,
-                'stay_minutes' => $stayMinutes,
+              'legs' => $legs,
+              'waypoint' => $waypoint,
+              'duration' => $totalDuration,
+              'stay_hours' => $stayHours,
+              'stay_minutes' => $stayMinutes,
+              'origin' => $origin,
+              'destination' => $destination,
             ];
+          
+          
+          
 
             // 経由地から目的地までの移動時間を追加
             if (!empty($waypoint)) {
@@ -211,6 +280,9 @@ class TravelScheduleController extends Controller
                 ];
             }
         }
+
+        // \Log::info('Routes: ' . json_encode($routes));
+
         return $routes;
     }
 }

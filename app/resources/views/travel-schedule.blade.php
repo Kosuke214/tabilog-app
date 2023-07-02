@@ -24,38 +24,51 @@
                 <div class="card">
                     <div class="card-header">経路詳細</div>
                     <div class="card-body">
-                        
-
                         @if (count($routeDetails) > 0)
-                        
-                        @foreach ($routeDetails as $index => $routeDetail)
-                            <div>
-                                @if ($index === 0)
-                                    @if ($departureTime)
-                                        <div>出発時間: {{ $departureTime->format('Y年n月j日 G:i') }}</div>
+                            @foreach ($routeDetails as $index => $routeDetail)
+                                <div>
+                                    @if ($index === 0)
+                                        @if ($routeDetail['departure-time'])
+                                            <h5>出発日： {{ $routeDetail['departure-time']->format('Y年n月j日') }}</h5>
+                                            <div>出発時間: {{ $routeDetail['departure-time']->format('G:i') }}</div>
+                                        @endif
+                                        @if ($routeDetail['origin'])
+                                            <div>出発地：{{ $routeDetail['origin'] }}</div>
+                                            @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
+                                                <div>↓ 移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
+                                            @endif
+                                        @endif
+                                    @elseif ($index === count($routeDetails) - 1)
+                                        <div>目的地：{{ $routeDetail['destination'] }}</div>
+                                        @php
+                                            $arrivalTime = $routeDetail['arrival-time'];
+                                        @endphp
+                                    @else
+                                        @if ($routeDetail['waypointName'])
+                                            <div>経由地：{{ $routeDetail['waypointName'] }}（滞在時間：{{ floor($routeDetail['stayDuration'] / 60) }}時間{{ $routeDetail['stayDuration'] % 60 }}分）</div>
+                                        @endif
+                                        @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
+                                            <div>↓ 移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
+                                        @endif
                                     @endif
-                                    @if ($origin)
-                                        <div>出発地：{{ $origin }}</div>
-                                    @endif
-                                @else
-                                    <div>↓ 移動時間：{{ floor(($routeDetail['totalDuration'] - $routeDetails[$index - 1]['totalDuration']) / 60) }}分</div>
-                                @endif`
-
-                                <div>経由地：{{ $routeDetail['waypointName'] }}</div>
-                                <div>滞在時間：{{ floor($routeDetail['stayDuration'] / 60) }}時間{{ $routeDetail['stayDuration'] % 60 }}分</div>
-                                <div>移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
-                            </div>
-                        @endforeach
-
+                                </div>
+                            @endforeach
+                            <div>到着予想時刻：{{ $arrivalTime->format('Y年n月j日 G:i') }}</div>
                         @else
                             <div>経路詳細はありません。</div>
                         @endif
+
+
+
+
+
 
                         <form action="{{ route('travel-schedule-edit') }}" method="GET">
                             @csrf
                             <button type="submit" class="btn btn-primary">スケジュールを編集する</button>
                         </form>
                     </div>
+
                 </div>
             </div>
 
@@ -70,7 +83,7 @@
 
                             <div class="form-group">
                                 <label for="departure-time">出発時間：</label>
-                                <input type="datetime-local" id="departure-time" name="departure-time" class="form-control" required>
+                                <input type="datetime-local" id="departure-time" name="departure-time" class="form-control" value="" required>
                             </div>
 
                             <div class="form-group">
@@ -105,10 +118,12 @@
                             <input type="hidden" name="travel-duration" id="travel-duration">
                             <!-- 経路詳細のhidden入力 -->
                             @forelse ($routeDetails as $index => $routeDetail)
-                                <input type="hidden" name="routeDetails[{{ $index }}][waypoint]" value="{{ $routeDetail['waypoint'] }}">
-                                <input type="hidden" name="routeDetails[{{ $index }}][stayDuration]" value="{{ $routeDetail['stay_minutes'] }}">
-                                <input type="hidden" name="routeDetails[{{ $index }}][legDuration]" value="{{ $routeDetail['duration'] }}">
-                                <input type="hidden" name="routeDetails[{{ $index }}][totalDuration]" value="{{ $routeDetail['duration'] }}">
+                                @if(isset($routeDetail['waypoint']) && isset($waypoint))
+                                    <input type="hidden" name="routeDetails[{{ $index }}][waypoint]" value="{{ $routeDetail['waypoint'] }}">
+                                    <input type="hidden" name="routeDetails[{{ $index }}][stayDuration]" value="{{ $routeDetail['stay_minutes'] }}">
+                                    <input type="hidden" name="routeDetails[{{ $index }}][legDuration]" value="{{ $routeDetail['duration'] }}">
+                                    <input type="hidden" name="routeDetails[{{ $index }}][totalDuration]" value="{{ $routeDetail['duration'] }}">
+                                @endif
                             @empty
                                 <!-- No route details -->
                             @endforelse

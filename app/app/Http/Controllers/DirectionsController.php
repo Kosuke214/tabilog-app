@@ -66,31 +66,32 @@ class DirectionsController extends Controller
         return view('directions', compact('results', 'origin', 'destination', 'selectedMode', 'departureTime', 'stayDuration'));
     }
 
+
     public function storeSchedule(Request $request)
     {
         $request->validate([
             'origin' => 'required',
             'destination' => 'required',
-            'mode' => 'required',
-            'departure-time' => 'required|date',
-            'stay-duration' => 'required|integer',
-            'travelDuration' => 'required|integer', // travelDuration のバリデーションを追加
+            'travelDuration' => 'required|numeric',
+            'stayDuration' => 'required|numeric',
+            'estimatedArrivalTime' => 'required|date_format:Y-m-d\TH:i:s.u\Z',
         ]);
 
-        $data = [
-            'origin' => $request->input('origin'),
-            'destination' => $request->input('destination'),
-            'mode' => $request->input('mode'),
-            'departure-time' => $request->input('departure-time'),
-            'stay-duration' => $request->input('stay-duration'),
-            'duration' => $request->input('travelDuration'),
-        ];
+        $data = $request->only('origin', 'destination', 'travelDuration', 'stayDuration', 'estimatedArrivalTime');
+        $origin = $request->input('origin');
+        $data['origin'] = $origin;
         $request->session()->put('schedule', $data);
         
-        return redirect()->route('travel-schedule');
+        return redirect()->route('travel-schedule')->with('origin', $origin)->with('schedule', $data);
     }
 
+    public function showTravelSchedule()
+    {
+        // $waypointの値を設定するロジックを追加
+        $waypoint = '経由地の値';
 
-
+        return view('travel-schedule', compact('waypoint'));
+        
+    }
 
 }
