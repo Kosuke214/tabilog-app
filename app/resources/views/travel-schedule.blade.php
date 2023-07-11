@@ -88,7 +88,7 @@
 
                             <div class="form-group">
                                 <label for="origin">出発地：</label>
-                                <input type="text" id="origin" name="origin" class="form-control" value="{{ $origin }}" required>
+                                <input type="text" id="origin" name="origin" class="form-control" value="{{ $origin ?? '' }}" required>
                             </div>
 
                             <div class="form-group">
