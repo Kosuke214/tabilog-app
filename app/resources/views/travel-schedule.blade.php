@@ -28,23 +28,23 @@
                             @foreach ($routeDetails as $index => $routeDetail)
                                 <div>
                                     @if ($index === 0)
-                                        @if ($routeDetail['departure-time'])
-                                            <h5>出発日： {{ $routeDetail['departure-time']->format('Y年n月j日') }}</h5>
-                                            <div>出発時間: {{ $routeDetail['departure-time']->format('G:i') }}</div>
+                                        <h5>出発日：{{ $routeDetail['departure-time']->format('Y年n月j日') }}</h5>
+                                        <div>出発時間: {{ $routeDetail['departure-time']->format('G:i') }}</div>
+                                    @endif
+                                    @if (isset($routeDetail['origin']))
+                                        <div>出発地：{{ $routeDetail['origin'] }}</div>
+                                        @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
+                                            <div>↓ 移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
                                         @endif
-                                        @if ($routeDetail['origin'])
-                                            <div>出発地：{{ $routeDetail['origin'] }}</div>
-                                            @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
-                                                <div>↓ 移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
-                                            @endif
-                                        @endif
-                                    @elseif ($index === count($routeDetails) - 1)
+                                    @endif
+                                    @if ($index === count($routeDetails) - 1)
                                         <div>目的地：{{ $routeDetail['destination'] }}</div>
                                         @php
                                             $arrivalTime = $routeDetail['arrival-time'];
                                         @endphp
+                                        <div>到着予想時刻：{{ $arrivalTime->format('Y年n月j日 G:i') }}</div>  <!-- 追加 -->
                                     @else
-                                        @if ($routeDetail['waypointName'])
+                                        @if (isset($routeDetail['waypointName']))
                                             <div>経由地：{{ $routeDetail['waypointName'] }}（滞在時間：{{ floor($routeDetail['stayDuration'] / 60) }}時間{{ $routeDetail['stayDuration'] % 60 }}分）</div>
                                         @endif
                                         @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
@@ -53,10 +53,10 @@
                                     @endif
                                 </div>
                             @endforeach
-                            <div>到着予想時刻：{{ $arrivalTime->format('Y年n月j日 G:i') }}</div>
                         @else
                             <div>経路詳細はありません。</div>
                         @endif
+
 
 
 
