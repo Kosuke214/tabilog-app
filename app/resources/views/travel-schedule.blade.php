@@ -30,38 +30,28 @@
                                     @if ($index === 0)
                                         <h5>出発日：{{ $routeDetail['departure-time']->format('Y年n月j日') }}</h5>
                                         <div>出発時間: {{ $routeDetail['departure-time']->format('G:i') }}</div>
-                                    @endif
-                                    @if (isset($routeDetail['origin']))
-                                        <div>出発地：{{ $routeDetail['origin'] }}</div>
+                                        <div>出発地：{{ $origin }}</div>
                                         @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
                                             <div>↓ 移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
                                         @endif
                                     @endif
-                                    @if ($index === count($routeDetails) - 1)
-                                        <div>目的地：{{ $routeDetail['destination'] }}</div>
-                                        @php
-                                            $arrivalTime = $routeDetail['arrival-time'];
-                                        @endphp
-                                        <div>到着予想時刻：{{ $arrivalTime->format('Y年n月j日 G:i') }}</div>  <!-- 追加 -->
-                                    @else
+                                    @if ($index !== count($routeDetails) - 1)
                                         @if (isset($routeDetail['waypointName']))
-                                            <div>経由地：{{ $routeDetail['waypointName'] }}（滞在時間：{{ floor($routeDetail['stayDuration'] / 60) }}時間{{ $routeDetail['stayDuration'] % 60 }}分）</div>
+                                            <div>経由地：{{ $routeDetail['waypointName'] }}（滞在時間：{{ floor($routeDetail['stayDuration'] / 3600) }}時間{{ floor(($routeDetail['stayDuration'] % 3600) / 60) }}分）</div>
+                                            @if (isset($routeDetails[$index+1]['legDuration']) && $routeDetails[$index+1]['legDuration'] > 0)
+                                                <div>↓ 移動時間：{{ floor($routeDetails[$index+1]['legDuration'] / 60) }}分</div>
+                                            @endif
+
                                         @endif
-                                        @if (isset($routeDetail['legDuration']) && $routeDetail['legDuration'] > 0)
-                                            <div>↓ 移動時間：{{ floor($routeDetail['legDuration'] / 60) }}分</div>
-                                        @endif
+                                    @else
+                                        <div>目的地：{{ $routeDetail['destination'] }}</div>
                                     @endif
                                 </div>
                             @endforeach
+                            <div>到着予想時刻：{{ $routeDetails[count($routeDetails) - 1]['arrival-time']->format('Y年n月j日 G:i') }}</div>
                         @else
                             <div>経路詳細はありません。</div>
                         @endif
-
-
-
-
-
-
 
                         <form action="{{ route('travel-schedule-edit') }}" method="GET">
                             @csrf
@@ -83,7 +73,7 @@
 
                             <div class="form-group">
                                 <label for="departure-time">出発時間：</label>
-                                <input type="datetime-local" id="departure-time" name="departure-time" class="form-control" value="" required>
+                                <input type="datetime-local" id="departure-time" name="departure-time" class="form-control" value="{{ $routeDetail['departure-time'] ? $routeDetail['departure-time']->format('Y-m-d\TH:i') : '' }}" required>
                             </div>
 
                             <div class="form-group">

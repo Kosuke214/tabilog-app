@@ -161,9 +161,8 @@ class TravelScheduleController extends Controller
                     'legDuration' => $legDuration,
                     'totalDuration' => $totalDuration,
                     'departure-time' => $departureTime,
-                    'origin' => end($waypoints),
                     'destination' => $destination,
-                    'arrival-time' => $arrivalTime->addSeconds($stayDurationSeconds + $legDuration),
+                    'arrival-time' => null, // 初期値としてnullを設定
                 ];
 
                 $totalDuration -= $stayDurationSeconds; // stayDurationを差し引く
@@ -174,10 +173,13 @@ class TravelScheduleController extends Controller
         if (!empty($routeDetails)) {
             $lastIndex = count($routeDetails) - 1;
             $routeDetails[$lastIndex]['stayDuration'] = 0;
+            $arrivalTime = $departureTime->copy()->addSeconds($routeDetails[$lastIndex]['totalDuration']);
+            $routeDetails[$lastIndex]['arrival-time'] = $arrivalTime; // 到着予想時刻を設定
         }
 
         // ルート詳細情報をセッションに保存
         $request->session()->put('routeDetails', $routeDetails);
+        $request->session()->put('origin', $origin);
 
         \Log::info('Route Details: ' . json_encode($routeDetails));
 
@@ -194,6 +196,8 @@ class TravelScheduleController extends Controller
             'arrivalTime' => $arrivalTime,
         ]);
     }
+
+
 
 
 
