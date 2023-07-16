@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DirectionsController;
+use App\Http\Controllers\TravelScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,44 +15,24 @@ use App\Http\Controllers\DirectionsController;
 |
 */
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
+
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Auth::routes();
 
-Route::match(['get', 'post'], '/travel-schedule', function () {
-    return view('travel-schedule');
-})->name('travel-schedule');
+Route::get('/travel-schedule', [TravelScheduleController::class, 'travelSchedule'])->name('travel-schedule');
 
-Route::get('/directions', function (Illuminate\Http\Request $request) {
-    $origin = $request->query('origin');
-    $destination = $request->query('destination');
-    $mode = $request->query('mode');
+Route::get('/travel-schedule/edit', function () {
+    return redirect()->route('directions');
+})->name('travel-schedule-edit');
 
-    // 経路を取得するための処理を追加する（Google Maps APIなどを使用）
+Route::get('/directions', [DirectionsController::class, 'showDirectionsForm'])->name('directions');
+Route::post('/directions', [DirectionsController::class, 'getDirections'])->name('get-directions');
 
-    // 到着予想時間を計算するための処理を追加する
-
-    return view('directions', [
-        'origin' => $origin,
-        'destination' => $destination,
-        'mode' => $mode,
-        // 経路や到着予想時間をビューに渡す
-    ]);
-})->name('directions');
-
-Route::post('/store-schedule', function (Illuminate\Http\Request $request) {
-    $data = $request->validate([
-        'origin' => 'required',
-        'destination' => 'required',
-        'mode' => 'required',
-        'departure-time' => 'required|date',
-        'stay-duration' => 'required|integer',
-    ]);
-
-    session($data);
-
-    return redirect()->route('travel-schedule');
-})->name('store-schedule');
-
+Route::post('/store-schedule', [TravelScheduleController::class, 'storeSchedule'])->name('store-schedule');
 
 
