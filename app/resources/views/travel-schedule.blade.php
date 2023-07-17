@@ -68,60 +68,67 @@
                     <div class="card-body">
                         <div id="map" style="height: 400px; margin-bottom: 20px;"></div>
 
-                        <form id="directions-form" action="{{ route('store-schedule') }}" method="POST">
-                            @csrf <!-- CSRFトークンを追加 -->
+                            <form id="directions-form" action="{{ route('store-schedule') }}" method="POST">
+                                @csrf <!-- CSRFトークンを追加 -->
 
-                            <div class="form-group">
-                                <label for="departure-time">出発時間：</label>
-                                <input type="datetime-local" id="departure-time" name="departure-time" class="form-control" value="{{ $routeDetail['departure-time'] ? $routeDetail['departure-time']->format('Y-m-d\TH:i') : '' }}" required>
-                            </div>
+                                <div class="form-group">
+                                    <label for="departure-time">出発時間：</label>
+                                    <input type="datetime-local" id="departure-time" name="departure-time" class="form-control" value="{{  $departureTime ? $departureTime ->format('Y-m-d\TH:i') : '' }}" required>
 
-                            <div class="form-group">
-                                <label for="origin">出発地：</label>
-                                <input type="text" id="origin" name="origin" class="form-control" value="{{ $origin ?? '' }}" required>
-                            </div>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="waypoint">経由地：</label>
-                                <input type="text" id="waypoint" name="waypoint" class="form-control" value="{{ $waypoint ?? '' }}">
-                            </div>
+                                <div class="form-group">
+                                    <label for="origin">出発地：</label>
+                                    <input type="text" id="origin" name="origin" class="form-control" value="{{ $origin }}" required>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="stay-duration">滞在時間（分）：</label>
-                                <input type="number" id="stay-duration" name="stay-duration" class="form-control" value="{{ $stayDuration ?? 0 }}" required>
-                            </div>
+                                <div id="waypoints-container">
+                                    <div class="form-row mb-2">
+                                        <div class="col">
+                                            <label for="waypoint-0">経由地：</label>
+                                            <input type="text" id="waypoint-0" name="waypoint[]" class="form-control" value="{{ old('waypoint.0') }}">
+                                        </div>
+                                        <div class="col">
+                                            <label for="stay-duration-0">滞在時間（分）：</label>
+                                            <input type="number" id="stay-duration-0" name="stay-duration[]" class="form-control" value="{{ old('stay-duration.0', 0) }}">
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="destination">目的地：</label>
-                                <input type="text" id="destination" name="destination" class="form-control" value="{{ $destination ?? '' }}" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="mode">移動手段：</label>
-                                <select id="mode" name="mode" class="form-control">
-                                    <option value="DRIVING">車</option>
-                                    <option value="WALKING">徒歩</option>
-                                    <option value="BICYCLING">自転車</option>
-                                </select>
-                            </div>
-
-                            <input type="hidden" name="travel-duration" id="travel-duration">
-                            <!-- 経路詳細のhidden入力 -->
-                            @forelse ($routeDetails as $index => $routeDetail)
-                                @if(isset($routeDetail['waypoint']) && isset($waypoint))
-                                    <input type="hidden" name="routeDetails[{{ $index }}][waypoint]" value="{{ $routeDetail['waypoint'] }}">
-                                    <input type="hidden" name="routeDetails[{{ $index }}][stayDuration]" value="{{ $routeDetail['stay_minutes'] }}">
-                                    <input type="hidden" name="routeDetails[{{ $index }}][legDuration]" value="{{ $routeDetail['duration'] }}">
-                                    <input type="hidden" name="routeDetails[{{ $index }}][totalDuration]" value="{{ $routeDetail['duration'] }}">
-                                @endif
-                            @empty
-                                <!-- No route details -->
-                            @endforelse
+                                <button id="add-waypoint-button" class="btn btn-primary">経由地を追加する</button>
 
 
-                            <button type="button" id="get-route" class="btn btn-primary">経路を取得</button>
-                            <button type="submit" id="apply-schedule" class="btn btn-success" style="display: none;">スケジュールに反映</button>
-                        </form>
+                                <div class="form-group">
+                                    <label for="destination">目的地：</label>
+                                    <input type="text" id="destination" name="destination" class="form-control" value="{{ $destination ?? '' }}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="mode">移動手段：</label>
+                                    <select id="mode" name="mode" class="form-control">
+                                        <option value="DRIVING">車</option>
+                                        <option value="WALKING">徒歩</option>
+                                        <option value="BICYCLING">自転車</option>
+                                    </select>
+                                </div>
+
+                                <input type="hidden" name="travel-duration" id="travel-duration">
+                                <!-- 経路詳細のhidden入力 -->
+                                @forelse ($routeDetails as $index => $routeDetail)
+                                    @if(isset($routeDetail['waypoint']) && isset($waypoint))
+                                        <input type="hidden" name="routeDetails[{{ $index }}][waypoint]" value="{{ $routeDetail['waypoint'] }}">
+                                        <input type="hidden" name="routeDetails[{{ $index }}][stayDuration]" value="{{ $routeDetail['stayDuration'] }}">
+                                        <input type="hidden" name="routeDetails[{{ $index }}][legDuration]" value="{{ $routeDetail['legDuration'] }}">
+                                        <input type="hidden" name="routeDetails[{{ $index }}][totalDuration]" value="{{ $routeDetail['totalDuration'] }}">
+                                    @endif
+                                @empty
+                                    <!-- No route details -->
+                                @endforelse
+
+                                <button type="button" id="get-route" class="btn btn-primary">経路を取得</button>
+                                <button type="submit" id="apply-schedule" class="btn btn-success" style="display: none;">スケジュールに反映</button>
+                            </form>
+
 
                         <div id="arrival-time" style="margin-top: 20px;"></div>
                         <div id="route-summary" style="margin-top: 20px;"></div>
@@ -157,64 +164,133 @@
 
             applyScheduleButton.addEventListener("click", function (event) {
                 event.preventDefault();
-                form.submit();
+                calculateAndDisplayRoute(directionsService, directionsRenderer);
             });
+
+
+            const addWaypointButton = document.getElementById("add-waypoint-button");
+            const waypointsContainer = document.getElementById("waypoints-container");
+            let waypointIndex = 1;
+            const waypoints = []; // 経由地の配列
+            const stayDurations = []; // 滞在時間の配列
+
+            addWaypointButton.addEventListener("click", function (event) {
+                event.preventDefault();
+
+                const waypointRow = document.createElement("div");
+                waypointRow.className = "form-row mb-2";
+
+                const waypointInput = document.createElement("div");
+                waypointInput.className = "col";
+                waypointInput.innerHTML = `<label for="waypoint">経由地：</label><input type="text" id="waypoint" name="waypoint[]" class="form-control" value="">`;
+
+                const stayDurationInput = document.createElement("div");
+                stayDurationInput.className = "col";
+                stayDurationInput.innerHTML = `<label for="stay-duration">滞在時間（分）：</label><input type="number" id="stay-duration" name="stay-duration[]" class="form-control" value="0">`;
+
+                waypointRow.appendChild(waypointInput);
+                waypointRow.appendChild(stayDurationInput);
+                waypointsContainer.appendChild(waypointRow);
+
+                waypointIndex++;
+
+                // stayDurations配列を更新
+                stayDurations.push(parseInt(stayDurationInput.querySelector('input').value, 10));
+
+
+                // 経路を再取得
+                calculateAndDisplayRoute(directionsService, directionsRenderer);
+            });
+
 
             function calculateAndDisplayRoute(directionsService, directionsRenderer) {
                 const origin = document.getElementById("origin").value;
-                const waypoint = document.getElementById("waypoint").value;
+                const waypoints = Array.from(document.getElementsByName("waypoint[]")); // 経由地を取得
                 const departureTimeInput = document.getElementById("departure-time");
                 const departureTime = new Date(departureTimeInput.value);
-                const stayDuration = parseInt(document.getElementById("stay-duration").value);
+                const stayDurations = document.getElementsByName("stay-duration[]");
+
+                // 空欄の経由地を除外して配列を作成
+                const filteredWaypoints = waypoints.reduce((filtered, waypoint, index) => {
+                    const location = waypoint.value.trim();
+                    const stayDurationInput = stayDurations[index].querySelector('input');
+                    const stayDuration = stayDurationInput && stayDurationInput.value !== '' ? parseInt(stayDurationInput.value) : 0;
+                    if (location !== '') {
+                        const waypointObject = {
+                            location: location,
+                            stopover: stayDuration > 0,
+                        };
+                        if (stayDuration > 0) {
+                            waypointObject.duration = {
+                                value: stayDuration,
+                                unit: 'minute',
+                            };
+                        }
+                        filtered.push({ location: location });
+                    }
+                    return filtered;
+                }, []);
+
+
+
                 const destination = document.getElementById("destination").value;
                 const mode = document.getElementById("mode").value;
 
                 const request = {
                     origin: origin,
                     destination: destination,
-                    waypoints: [
-                        {
-                            location: waypoint,
-                            stopover: true,
-                        }
-                    ],
+                    waypoints: filteredWaypoints.length > 0 ? filteredWaypoints : undefined,
                     travelMode: google.maps.TravelMode[mode],
                     drivingOptions: {
                         departureTime: departureTime,
                     },
                 };
+                
 
                 directionsService.route(request, function (response, status) {
-                    if (status === "OK") {
-                        directionsRenderer.setDirections(response);
+                if (status === "OK") {
+                    directionsRenderer.setDirections(response);
 
-                        const route = response.routes[0];
-                        const legs = route.legs;
-                        let totalDuration = 0;
+                    const route = response.routes[0];
+                    const legs = route.legs;
+                    let totalDuration = 0;
 
-                        const routes = []; // 経路情報を保存する配列
+                    const routes = []; // 経路情報を保存する配列
 
-                        for (let i = 0; i < legs.length; i++) {
-                            const leg = legs[i];
-                            const waypointName = leg.end_address;
-                            const legDuration = leg.duration.value;
+                    for (let i = 0; i < legs.length; i++) {
+                        const leg = legs[i];
+                        const waypointLocation = leg.end_location;
+                        const waypointMarker = new google.maps.Marker({
+                            position: waypointLocation,
+                            map: map,
+                        });
 
-                            const routeInfo = {
-                                waypointName: waypointName,
-                                legDuration: legDuration
-                            };
+                        const waypointName = leg.end_address;
+                        const legDuration = leg.duration.value;
+                        const stayDuration = stayDurations[i] && stayDurations[i].querySelector('input') ? stayDurations[i].querySelector('input').value : '';
+                        const routeInfo = {
+                            waypointName: waypointName,
+                            legDuration: legDuration,
+                            stayDuration: stayDuration,
+                        };
 
-                            routes.push(routeInfo);
+                        routes.push(routeInfo);
 
-                            if (i < legs.length - 1) {
-                                totalDuration += legDuration; // 経由地間の移動時間を加算
-                                totalDuration += stayDuration * 60; // 経由地の滞在時間を加算
-                            } else {
-                                totalDuration += legDuration; // 最後の目的地までの所要時間のみ加算
-                            }
+                        if (i < legs.length - 1) {
+                            totalDuration += legDuration; // 経由地間の移動時間を加算
+                            totalDuration += stayDurations[i] && stayDurations[i].querySelector('input') ? parseInt(stayDurations[i].querySelector('input').value, 10) * 60 : 0; // 経由地の滞在時間を加算
+                        } else {
+                            totalDuration += legDuration; // 最後の目的地までの所要時間のみ加算
                         }
+                    }
+
 
                         const arrivalTime = new Date(departureTime.getTime() + (totalDuration * 1000));
+                        console.log(arrivalTime);
+                        console.log(departureTime);
+                        console.log(totalDuration);
+                        console.log(arrivalTime);
+
                         const arrivalTimeString = arrivalTime.toLocaleTimeString("ja-JP", { hour: "numeric", minute: "numeric" });
 
                         const arrivalTimeElement = document.getElementById("arrival-time");
